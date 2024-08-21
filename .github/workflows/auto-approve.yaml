@@ -8,6 +8,14 @@ jobs:
       pull-requests: write
     if: github.actor == 'TalatCikikci-TomTom'
     steps:
+      - name: Print User Context
+        run: |
+          echo "User: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Token: ${{ secrets.GITHUB_TOKEN }}"
+          echo "Pull Request created by: ${{ github.event.pull_request.user.login }}"
+
       - uses: hmarr/auto-approve-action@v4
         with:
           github-token: ${{ secrets.BOT_TOKEN }}
