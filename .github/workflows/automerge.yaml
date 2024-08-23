@@ -33,11 +33,19 @@ jobs:
             echo "--> pr cannot be automerged!"
           fi
 
+      - name: Generate token for automerge
+        id: github_token
+        if: ${{ steps.is-automerge.outputs.is-automerge-allowed }}
+        uses: peter-murray/workflow-application-token-action@dc0413987a085fa17d19df9e47d4677cf81ffef3  # v3.0.0
+        with:
+          application_id: ${{ steps.vault-secrets.outputs.tt-hcp3-rw-app-id }}
+          application_private_key: ${{ steps.vault-secrets.outputs.tt-hcp3-rw-app-key }}
+
       - name: automerge PR with updated conan dependencies
         uses: actions/github-script@v7
         if: ${{ steps.is-automerge.outputs.is-automerge-allowed }}
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.github_token.outputs.token }}
           script: |
             github.rest.pulls.merge({
               owner: context.repo.owner,
