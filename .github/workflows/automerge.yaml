@@ -1,0 +1,47 @@
+name: Auto merge
+on: pull_request_target
+
+jobs:
+  automerge:
+    name: automerge PR
+    runs-on: ubuntu-latest
+    env:
+      automerge-pr-creator: "TalatCikikci-TomTom"
+      automerge-pr-title: "build(deps): bump"
+      pr-creator: ${{ github.event.pull_request.user.login }}
+      pr-title: ${{ github.event.pull_request.title }}
+    steps:
+      - name: check automerge conditions
+        id: is-automerge
+        shell: bash
+        run: |
+          if [[ "${{ env.pr-creator }}" == "${{ env.automerge-pr-creator }}" ]]; then
+            echo "pr-creator matches '${{env.automerge-pr-creator}}' ✓"
+          else
+            echo "pr-creator does NOT match"
+          fi
+          if [[ "${{env.pr-title}}" =~ "${{env.automerge-pr-title}}" ]]; then
+            echo "pr-title matches '${{env.automerge-pr-title}}' ✓"
+          else
+            echo "pr-title does NOT match"
+          fi
+          if [[ "${{ env.pr-creator }}" == "${{ env.automerge-pr-creator }}"
+                && "${{env.pr-title}}" =~ "${{env.automerge-pr-title}}" ]]; then
+            echo "--> pr can be automerged ✓"
+            echo "is-automerge-allowed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "--> pr cannot be automerged!"
+          fi
+
+      - name: automerge PR with updated conan dependencies
+        uses: actions/github-script@v7
+        if: ${{ steps.is-automerge.outputs.is-automerge-allowed }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: '${{ github.event.number }}',
+              merge_method: 'squash'
+            });
